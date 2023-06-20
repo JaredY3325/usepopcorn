@@ -53,46 +53,74 @@ const average = (arr) =>
 const KEY = "7b194877";
 
 export default function App() {
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const query = "sdfsafgwea";
+  const [selectedId, setSelectedId] = useState("tt1375666");
+
+  /*
+  useEffect(function () {
+    console.log("After initial render");
+  }, []);
 
   useEffect(function () {
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
-        const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-        );
+    console.log("After every render");
+  });
 
-        if (!res.ok)
-          throw new Error("Something went wrong with fetching movies");
+  useEffect(
+    function () {
+      console.log("D");
+    },
+    [query]
+  );
 
-        const data = await res.json();
+  console.log("During render"); */
 
-        // for when no data is f etched
-        if (data.Response === "False") throw new Error("Movie not found");
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setError("");
+          setIsLoading(true);
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+          );
 
-        setMovies(data.Search);
-        setIsLoading(false);
-      } catch (err) {
-        console.error(err.message);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+          if (!res.ok)
+            throw new Error("Something went wrong with fetching movies");
+
+          const data = await res.json();
+
+          // for when no data is fetched
+          if (data.Response === "False") throw new Error("Movie not found");
+
+          setMovies(data.Search);
+          setIsLoading(false);
+        } catch (err) {
+          console.error(err.message);
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
 
-    // console.log(movies); // this is a stale state that hasn't been updated
-    fetchMovies();
-  }, []);
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        return;
+      }
+      // console.log(movies); // this is a stale state that hasn't been updated
+      fetchMovies();
+    },
+    [query]
+  );
 
   return (
     <>
       <NavBar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
 
@@ -109,7 +137,7 @@ export default function App() {
 
         <Box movies={movies}>
           {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
-          {/* These conditions are mutally exclusive */}
+          {/* These conditions are mutally exclusive. If there is an error, isLoading will be false */}
           {isLoading && <Loader />}
           {!isLoading && !error && <MovieList movies={movies} />}
           {error && <ErrorMessage message={error} />}
@@ -156,9 +184,7 @@ function Logo() {
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
-
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
